@@ -8,7 +8,7 @@ import String
 import Date exposing (Date)
 import Effects exposing (Effects)
 import List
-import Result exposing (Result)
+import Result exposing (Result, andThen)
 
 
 main =
@@ -19,7 +19,7 @@ update : Action -> Model -> (Model, Effects Action)
 update action model = (case action of
     Tick time -> model -- toString <| Date.second <| Date.fromTime <| time 
     ModStart (Dt str) -> str
-    ModStart (Tm str) -> str
+    ModStart (Tm str) -> toString <| parseHourMinute str
     ModEnd (Dt str) -> str
     ModEnd (Tm str) -> str
     , Effects.none)
@@ -28,9 +28,19 @@ update action model = (case action of
 updateRemain : Time -> Model -> Model
 updateRemain time model = model ++ ""
 
-{- stub
-parseTime : String -> Time
-parseTime = Result.map List.sum << List.map2 (Result.map2 (*)) [Ok Time.hour, Ok Time.minute] << List.map String.toFloat << String.split
+parseHourMinute : String -> Result String Float
+parseHourMinute  = resultSum << List.map2 (Result.map2 (*)) [Ok Time.hour, Ok Time.minute] << List.map String.toFloat << String.split ":"
+
+resultSum : List (Result a Float) -> Result a Float 
+resultSum = List.foldr (Result.map2 (+)) (Ok 0)
+
+{-
+piyo : List (Result String Float) -> Result String Float
+piyo lst = List.map2 piyopiyo lst [Time.hour, Time.minute] `andThen` (List.map2 (*) [Time.hour, Time.minute]) `andThen` List.sum
+
+
+piyopiyo : Result String Float -> Float -> Result String Float
+piyopiyo a b = Result.map (*) a (Ok b) 
 -}
 
 type Action = Tick Time | ModStart RawStringDateTime | ModEnd RawStringDateTime 
